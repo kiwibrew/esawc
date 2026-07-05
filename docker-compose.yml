@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: esawc-app
+    volumes:
+      - ./app/data:/app/data
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/app.db
+      - TILE_CACHE_DIR=/app/data/tiles
+    ports:
+      - "8001:8001"
+    restart: always
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: esawc-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    restart: always
