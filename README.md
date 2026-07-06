@@ -82,6 +82,22 @@ The API uses **Bearer Token** authentication.
   - Parameters: `lat`, `lon`, `radius` (meters)
   - Returns: A dictionary of class IDs and their decimal percentage coverage (e.g., `{"10": 0.7, "20": 0.3}`).
 
+## Returned Data
+ESA Worldcover Classes returned are:
+```
+10  Tree cover
+20  Shrubland
+30  Grassland
+40  Cropland
+50  Built-up
+60  Bare / sparse vegetation
+70  Snow and ice
+80  Permanent water
+90  Herbaceous wetland
+95  Mangroves
+100 Moss and lichen
+```
+
 ## Tile Caching Logic
 
 To optimize performance and storage, the server implements an automated tile manager:
