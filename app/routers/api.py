@@ -34,6 +34,14 @@ async def get_land_cover_fractions(
     current_user: User = Depends(get_current_active_user),
     _credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)
 ):
+    """
+    Returns fractional land cover composition within a circular area.
+
+    **radius** must be between 1 and 100,000 metres (100 km). Requests exceeding
+    this limit are rejected with HTTP 422.
+    """
+    if radius <= 0 or radius > 100_000:
+        raise HTTPException(status_code=422, detail="radius must be between 1 and 100000 metres (100 km).")
     service = WorldCoverService(db)
     try:
         fractions = await service.get_land_cover_fractions(lat, lon, radius)

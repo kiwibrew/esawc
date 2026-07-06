@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from jose import jwt
 from app.database import get_db
-from app.models.models import User
+from app.models.models import User, CachedTile
 from app.dependencies import pwd_context, get_current_active_user, get_current_admin_user, get_current_user
 from app.config import settings
 from fastapi.templating import Jinja2Templates
@@ -179,6 +179,14 @@ async def delete_user(
         await db.delete(user)
         await db.commit()
     return RedirectResponse(url="/manage-users", status_code=status.HTTP_303_SEE_OTHER)
+
+@router.get("/tile-cache", response_class=HTMLResponse)
+async def tile_cache_page(request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    result = await db.execute(select(CachedTile))
+    tiles = result.scalars().all()
+    return templates.TemplateResponse(
+        request=request, name="tile_cache.html", context={"tiles": tiles}
+    )
 
 @router.get("/app-docs", response_class=HTMLResponse)
 async def app_docs(request: Request, current_user: User = Depends(get_current_active_user)):

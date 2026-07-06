@@ -79,8 +79,9 @@ The API uses **Bearer Token** authentication.
   - Parameters: `lat`, `lon` (decimal degrees)
   - Returns: `{"class": 10}`
 - **GET `/api/land-cover-fractions`**:
-  - Parameters: `lat`, `lon`, `radius` (meters)
+  - Parameters: `lat`, `lon`, `radius` (metres — **maximum 100,000 m / 100 km**)
   - Returns: A dictionary of class IDs and their decimal percentage coverage (e.g., `{"10": 0.7, "20": 0.3}`).
+  - Requests with `radius > 100000` are rejected with HTTP 422.
 
 ## Returned Data
 ESA Worldcover Classes returned are:
@@ -97,6 +98,22 @@ ESA Worldcover Classes returned are:
 95  Mangroves
 100 Moss and lichen
 ```
+
+## Land Cover Fractions — How It Works
+
+The `/api/land-cover-fractions` endpoint uses the following algorithm to compute land cover composition within a circular area:
+
+1. **Geodesic buffer**: The query point is projected to an Azimuthal Equidistant (AEQD) coordinate system centred on that point. A circle of the requested radius (in metres) is drawn there, then reprojected back to WGS84. AEQD preserves distances from the centre, so the result is a true geodesic circle at any latitude.
+
+2. **Tile identification**: The WGS84 bounding box of the circle is scanned in 3° steps to find every ESA WorldCover tile that the circle intersects. Each tile is downloaded from ESA's S3 bucket and cached locally on first use.
+
+3. **Windowed reads**: Rather than loading each full ~2 GB tile into memory, only the small rectangular pixel window that overlaps the circle's bounding box is read from disk. Memory usage is therefore proportional to the query area, not the tile size — a 100 km radius query reads roughly 20,000 × 20,000 pixels (~400 MB) at most, compared to ~2 GB per full tile.
+
+4. **Mosaic assembly**: The windowed pixel arrays from all intersecting tiles are placed into a single in-memory mosaic using pixel-offset arithmetic derived from each tile's affine transform.
+
+5. **Geometry mask**: A pixel mask is applied so that only pixels whose centres fall inside the WGS84 circle polygon are counted.
+
+6. **Fraction calculation**: Surviving pixel values are tallied by ESA WorldCover class number and converted to fractions of the total valid pixel count. The fractions are guaranteed to sum to exactly 1.0.
 
 ## Tile Caching Logic
 

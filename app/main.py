@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -7,6 +8,8 @@ from app.database import init_db
 from app.routers import auth, api
 from app.dependencies import get_current_user
 from starlette import status
+
+logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -58,7 +61,16 @@ window.addEventListener('load', function() {{
 }});
 </script>
 """
-    body = html.body.decode("utf-8") + inject
+    back_button = """
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>
+  #back-to-home { position: fixed; top: 12px; left: 12px; z-index: 9999; }
+</style>
+<div id="back-to-home">
+  <a href="/" class="btn btn-secondary btn-sm">&larr; Back to Home</a>
+</div>
+"""
+    body = html.body.decode("utf-8") + inject + back_button
     return HTMLResponse(content=body, status_code=html.status_code)
 
 @app.get("/openapi.json", include_in_schema=False)
