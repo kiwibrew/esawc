@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Security
+import json
+
+from fastapi import APIRouter, Depends, File, HTTPException, Security, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.services.worldcover import WorldCoverService
+from app.services.worldcover import GeoJSONNoTileCoverageError, WorldCoverService
 from app.dependencies import get_current_active_user
 from app.models.models import User
 
@@ -46,5 +48,28 @@ async def get_land_cover_fractions(
     try:
         fractions = await service.get_land_cover_fractions(lat, lon, radius)
         return fractions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/land-cover-geojson")
+async def post_land_cover_geojson(
+    geojson_file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)
+):
+    service = WorldCoverService(db)
+    try:
+        geojson = json.loads(await geojson_file.read())
+        if not isinstance(geojson, dict):
+            raise HTTPException(status_code=422, detail="geojson file must contain a JSON object")
+        return await service.get_land_cover_for_geojson(geojson)
+    except GeoJSONNoTileCoverageError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="geojson file is not valid JSON")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

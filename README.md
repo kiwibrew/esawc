@@ -25,6 +25,11 @@ The API uses **Bearer Token** authentication.
   - Parameters: `lat`, `lon`, `radius` (metres — **maximum 100,000 m / 100 km**)
   - Returns: A dictionary of class IDs and their decimal percentage coverage (e.g., `{"10": 0.7, "20": 0.3}`).
   - Requests with `radius > 100000` are rejected with HTTP 422.
+- **POST `/api/land-cover-geojson`**:
+  - Multipart upload with `geojson_file`
+  - Returns `{"class": 10}` for a single GeoJSON `Point`
+  - Returns a dictionary of class IDs and fractional coverage for other GeoJSON geometry types
+  - If the uploaded GeoJSON does not overlap any available tile coverage, the request is rejected with HTTP 422 and `geojson does not have any coverage of any available tiles`
 
 ## Returned Data
 ESA Worldcover Classes returned are:
