@@ -10,7 +10,13 @@ from sqlalchemy import select
 from jose import jwt
 from app.database import get_db
 from app.models.models import User, CachedTile
-from app.dependencies import pwd_context, get_current_active_user, get_current_admin_user, get_current_user
+from app.dependencies import (
+    SESSION_COOKIE_NAME,
+    get_current_active_user,
+    get_current_admin_user,
+    get_current_user,
+    pwd_context,
+)
 from app.config import settings
 from fastapi.templating import Jinja2Templates
 
@@ -52,7 +58,7 @@ async def login(
     
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(
-        key="access_token",
+        key=SESSION_COOKIE_NAME,
         value=f"Bearer {access_token}",
         httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
@@ -77,7 +83,7 @@ async def login_for_access_token(
 @router.post("/logout")
 async def logout():
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-    response.delete_cookie("access_token", path="/", samesite="lax")
+    response.delete_cookie(SESSION_COOKIE_NAME, path="/", samesite="lax")
     return response
 
 @router.get("/manage-users", response_class=HTMLResponse)

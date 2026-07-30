@@ -15,3 +15,7 @@ numpy
 shapely
 pyproj
 markdown
+pytest
+pytest-asyncio
+ruff
+mypy
