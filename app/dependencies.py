@@ -10,6 +10,7 @@ from app.models.models import User
 from app.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+SESSION_COOKIE_NAME = "esawc_session"
 
 # For Web UI Login (Cookies/Session would be better but keeping it simple with JWT if needed, 
 # or just use the database session if possible. The prompt says "Bearer token authentication").
@@ -30,7 +31,7 @@ async def get_current_user(
     
     # If no token from Authorization header, check cookie
     if not token:
-        cookie_token = request.cookies.get("access_token")
+        cookie_token = request.cookies.get(SESSION_COOKIE_NAME)
         if cookie_token and cookie_token.startswith("Bearer "):
             token = cookie_token[7:]
 
